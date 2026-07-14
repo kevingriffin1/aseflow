@@ -13,7 +13,7 @@ from pathlib import Path
 from scipy.constants import physical_constants 
 from collections import Counter
 import ast
-
+import json
 
 import copy
 from ase.mep import NEBTools

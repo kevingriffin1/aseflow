@@ -8,6 +8,7 @@ class PathsConfig:
 
 @dataclass
 class NEBConfig:
+    k: float = 0.1
     climb: bool = True
     method: Optional[str] = None
     interpolation_method: Optional[str] = None

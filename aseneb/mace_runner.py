@@ -86,6 +86,7 @@ class MACERunner:
 
         neb = NEB(
             images,
+            k=self.cfg.neb.k,
             climb=self.cfg.neb.climb,
             method=self.cfg.neb.method,
         )

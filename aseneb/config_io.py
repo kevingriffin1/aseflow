@@ -13,11 +13,9 @@ def load_config(path):
     return RunConfig(
         paths=PathsConfig(workdir=workdir),
         neb=NEBConfig(
-            #n_images=data["neb"]["n_images"],
+            k=data["neb"].get("k", 0.1),
             climb=data["neb"]["climb"],
             method=data["neb"]["method"],
-            #initial=Path(data["neb"]["initial"]),
-            #final=Path(data["neb"]["final"]),
             interpolation_method=data["neb"].get("interpolation_method", "idpp"),
             mic=data["neb"].get("mic", True),
         ),
