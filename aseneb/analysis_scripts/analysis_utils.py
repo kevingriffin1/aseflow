@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import matplotlib.patches as mpatches
 from matplotlib import cycler
 from ase.io import read, write
 from vestapy import Visualizer
@@ -644,7 +645,15 @@ def plot_final_path(folder, rel_energies, barrier, delta_E, rmse, bias, converge
     with open(out_path, "w") as f:
         f.write(json.dumps(clean_for_json(record)) + "\n")
 
-def plot_final_fitted_path(folder, n_images, mlip_forcefit, barrier, delta_E, plot_dft=False):
+def plot_final_fitted_path(
+    folder,
+    n_images,
+    mlip_forcefit,
+    barrier,
+    delta_E,
+    converged=True,
+    plot_dft=False,
+):
     """
     Plot NEB final path with optional overlay of DFT energies from energies.csv.
 
@@ -666,6 +675,9 @@ def plot_final_fitted_path(folder, n_images, mlip_forcefit, barrier, delta_E, pl
         Conversion factor from Hartree to eV for DFT energies
     """
     name = get_reaction_name(folder)
+
+    mlip_color = "dodgerblue" if converged else "red"
+    mlip_tangent_color = "lightskyblue" if converged else "lightcoral"
 
     fig, ax = plt.subplots(figsize=(8, 4))
 
@@ -769,10 +781,10 @@ def plot_final_fitted_path(folder, n_images, mlip_forcefit, barrier, delta_E, pl
     mlip_fit_path = mlip_forcefit.fit_path  # the fitted interpolation (relative energy)
     mlip_fit_energies = mlip_forcefit.fit_energies
     line2, = ax.plot(np.array(mlip_path)+1, mlip_energies, marker='o', 
-                     color='dodgerblue', linewidth=0, markersize=8, alpha=0.6, zorder=6)
+                     color=mlip_color, linewidth=0, markersize=8, alpha=0.6, zorder=6)
     for x, y in mlip_forcefit.lines:  # force tangent lines
-        ax.plot(np.array(x)+1, y, color='lightskyblue', marker=None, linewidth=1.5, zorder=4)
-    ax.plot(np.array(mlip_fit_path)+1, mlip_fit_energies, color='dodgerblue', marker=None, linewidth=2, zorder=5)
+        ax.plot(np.array(x)+1, y, color=mlip_tangent_color, marker=None, linewidth=1.5, zorder=4)
+    ax.plot(np.array(mlip_fit_path)+1, mlip_fit_energies, color=mlip_color, marker=None, linewidth=2, zorder=5)
 
     for xi, yi in zip(mlip_path, mlip_energies):
         ax.text(np.array(xi)+1, yi + 0.015, f"{yi:.2f}", ha="center", fontsize=10, color="k", zorder=8)
@@ -958,7 +970,7 @@ def plot_barriers(
     df,
     use_min=True,
     only_singles=False,
-    outfile="barriers.png",
+    model_name="Model",
 ):
 
     halide_colors = {
@@ -1038,31 +1050,87 @@ def plot_barriers(
     is_dep   = (data_sorted["rxn_type"] == "deposition").tolist()
 
     fig, ax = plt.subplots(figsize=(11, 11))
+    fig.patch.set_facecolor("#ffffff")
+    ax.set_facecolor("#f7f7f7")
 
+    for i in range(len(labels)):
+        ax.axhspan(i - 0.5, i + 0.5, color="#F0EFEA" if i % 2 == 0 else "#FAFAF8", zorder=0)
+    
     y = np.arange(len(labels))
-    bars = ax.barh(y, barriers, color=colors, height=0.65)
+    bars = ax.barh(
+        y, barriers, color=colors, height=0.65, zorder=3,
+        edgecolor="#cccccc", linewidth=0.8, alpha=0.95, capstyle="round"
+    )
 
-    # Styling logic (unchanged)
+    # Change border style based on halide type
     for bar, halides in zip(bars, data_sorted["halide_ids"]):
         if isinstance(halides, str):
             halides = ast.literal_eval(halides)
-
         if len(halides) == 1:
+            # Only one halide: solid grey border
+            bar.set_edgecolor("#555555")
             bar.set_linestyle("-")
+            bar.set_linewidth(1.5)
         elif len(halides) == 3:
+            # Only one halide: solid grey border
+            bar.set_edgecolor("#555555")
             bar.set_linestyle(":")
+            bar.set_linewidth(1.5)
         else:
-            bar.set_linestyle((0, (4, 2)))
+            # Mixed halides: dashed grey border
+            bar.set_edgecolor("#555555")
+            bar.set_linestyle((0, (4, 2)))  # dashed pattern: 4 on, 2 off
+            bar.set_linewidth(1.5)
+    
+    
+    # Add stars for deposition reactions
+    for i, (barrier, dep) in enumerate(zip(barriers, is_dep)):
+        if dep:
+            ax.text(barrier + 0.03, i, "★", va="center", ha="left",
+                    color="#000000", fontweight="bold")
 
-    # Labels
+    
+    # Y-axis labels
     ax.set_yticks(y)
-    ax.set_yticklabels([format_reaction_label(r) for r in labels])
-
-    ax.set_xlabel("Barrier (eV)")
+    y_labels = [format_reaction_label(rxn) for rxn in data_sorted["rxn"]]
+    ax.set_yticklabels(y_labels, fontfamily="sans-serif")
+    for tick, dep in zip(ax.get_yticklabels(), is_dep):
+        if dep:
+            tick.set_fontweight("bold")
+    
+    # X-axis
+    ax.set_xlabel("Barrier (eV)", fontweight="medium")
     ax.set_xlim(0, max(barriers) + 0.3)
-
-    plt.tight_layout()
-    plt.savefig(outfile, dpi=200)
+    ax.set_ylim(-0.6, len(labels) - 0.4)
+    ax.xaxis.grid(True, color="#e0e0e0", zorder=0)
+    ax.set_axisbelow(True)
+    
+    # Remove top/right spines
+    for spine in ["top", "right"]:
+        ax.spines[spine].set_visible(False)
+    
+    # Legend
+    present_halides = sorted({
+        tuple(sorted(ast.literal_eval(h) if isinstance(h, str) else h))
+        for h in data_sorted["halide_ids"]
+    })
+    
+    halide_patches = [
+        mpatches.Patch(
+            color=halide_colors["+".join(h)],
+            label="+".join(h)
+        )
+        for h in present_halides
+    ]
+    
+    ax.legend(handles=halide_patches, loc="upper right", framealpha=0.9, edgecolor="#dddddd")
+    
+    # Reflect dataset choice in plot title
+    min_or_avg = "Minimums" if use_min else "Averaged"
+    plt.title(f"Summary for {model_name} : Complex barriers | {min_or_avg}", fontsize=14, fontweight="bold", pad=10)
+    model_str = model_name.replace(" ", "_").lower()
+    outfile = f"barriers_{model_str}_{min_or_avg.lower()}.pdf"
+    plt.savefig(outfile, dpi=200, bbox_inches="tight")
     plt.close()
 
 # ============================== MAIN CONTROL FUNCTION ==============================
@@ -1140,7 +1208,7 @@ def run_neb_analysis(
                     forcefit = None
 
                 if forcefit is not None:
-                    plot_final_fitted_path(folder,n_images,forcefit,barrier,delta_E,plot_dft=dft_overlay)
+                    plot_final_fitted_path(folder,n_images,forcefit,barrier,delta_E,converged=converged,plot_dft=dft_overlay)
                 else:
                     print(f"Skipping fitted-path plot for {folder} (no valid forcefit)")
 

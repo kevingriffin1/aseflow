@@ -8,9 +8,9 @@ def main():
     )
 
     parser.add_argument("--base-path", default=".", help="Directory containing neb_summary.xlsx")
-
     parser.add_argument("--use-min", action="store_true")
     parser.add_argument("--only-singles", action="store_true")
+    parser.add_argument("--model-name", default="Model", help="Model name, only affects plot title and file name")
 
     args = parser.parse_args()
 
@@ -25,4 +25,5 @@ def main():
         data,
         use_min=args.use_min,
         only_singles=args.only_singles,
+        model_name=args.model_name,
     )

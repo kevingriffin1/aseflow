@@ -17,14 +17,20 @@ HEADER_OVERRIDES = {}
 SAMPLINGS = ["c", "d", "dr", "r"]
 
 SAMPLING_PATTERN = re.compile(
-    r"^(.*?)_(c|d|dr|r)_TO_(.*?)_(c|d|dr|r)_finalfittedpath$"
+    r"^(.*?)_(c|d|dr|r)_TO_(.*?)_(c|d|dr|r)$"
 )
 
-def matches_system(name: str) -> bool:
-    return (
-        name.lower().endswith(".png")
-        and "_finalfittedpath" in name
-    )
+def matches_system(name: str, suffix: str) -> bool:
+
+    if not name.lower().endswith(".png"):
+        return False
+
+    stem = os.path.splitext(name)[0]
+
+    if suffix == "":
+        return True
+
+    return stem.endswith(suffix)
 
 def display_name_for_dir(directory: str) -> str:
     base = os.path.basename(os.path.normpath(directory))
@@ -37,7 +43,7 @@ def clean_dir_name(path):
 # Mode 1: Compare directories
 # ==========================================================
 
-def collect_directory_images(method_dirs):
+def collect_directory_images(method_dirs,suffix="finalfittedpath"):
     per_method = defaultdict(dict)
 
     for method_dir in method_dirs:
@@ -48,7 +54,7 @@ def collect_directory_images(method_dirs):
 
         for dirpath, _, filenames in os.walk(method_dir):
             for filename in filenames:
-                if not matches_system(filename):
+                if not matches_system(filename,suffix):
                     continue
 
                 system_name = os.path.splitext(filename)[0]
@@ -84,7 +90,7 @@ def collect_directory_images(method_dirs):
 # Mode 2: Compare c/d/dr/r samplings within one directory
 # ==========================================================
 
-def collect_sampling_images(directory):
+def collect_sampling_images(directory,suffix="finalfittedpath"):
 
     systems = defaultdict(dict)
 
@@ -92,10 +98,14 @@ def collect_sampling_images(directory):
 
         for filename in filenames:
 
-            if not matches_system(filename):
+            if not matches_system(filename, suffix):
                 continue
 
             stem = os.path.splitext(filename)[0]
+
+            if suffix:
+                stem = stem.removesuffix(suffix)
+
 
             match = SAMPLING_PATTERN.match(stem)
 
@@ -271,6 +281,16 @@ def main():
     )
 
     parser.add_argument(
+        "--suffix",
+        default="finalfittedpath",
+        help=(
+            "PNG suffix to match before .png. "
+            "Examples: 'finalfittedpath', "
+            "'finalpath', or '' for all PNGs."
+        ),
+    )
+
+    parser.add_argument(
         "-o",
         "--output",
         help="Output PDF path.",
@@ -320,7 +340,8 @@ def main():
         )
 
         methods, systems = collect_sampling_images(
-            args.dirs[0]
+            args.dirs[0],
+            suffix=args.suffix
         )
 
     else:
@@ -333,7 +354,8 @@ def main():
             print(f"  {d}")
 
         methods, systems = collect_directory_images(
-            args.dirs
+            args.dirs,
+            suffix=args.suffix
         )
 
     render_pdf(
