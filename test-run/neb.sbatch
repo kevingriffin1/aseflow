@@ -19,7 +19,7 @@ TASK_ID=$1
 
 ml pytorch/2.12.0
 unset PYTHONNOUSERSITE
-source /nopt/nlr/apps/kestrel-gpu/software/mace/environments/mace/bin/activate
+source /kfs2/projects/newbridge/kgriffin/aseflow/.venv/bin/activate
 
 aseneb --neb-config mace.yaml --run-neb mace
 

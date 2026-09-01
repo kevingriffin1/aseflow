@@ -29,19 +29,11 @@ export AC_PATH=/your/path/to/AdaptiveComputing
 
 If `AC_PATH` is not set, the workflow falls back to `~/AdaptiveComputing`.
 
-### 2. Install Python packages into the MACE environment
+### 2. Python environment
 
-Must be done from **kl5**:
-
-```bash
-ssh kl5
-ml pytorch/2.12.0
-unset PYTHONNOUSERSITE
-source /nopt/nlr/apps/kestrel-gpu/software/mace/environments/mace/bin/activate
-
-pip install -e /path/to/aseflow          # installs the aseneb package
-pip install langgraph langgraph-checkpoint-sqlite
-```
+A dedicated venv lives at `aseflow/.venv/` with all required packages already
+installed (`aseneb`, `mace-torch`, `langgraph`, etc.). No pip install needed —
+just activate it as shown in the usage section below.
 
 ---
 
@@ -53,7 +45,7 @@ pip install langgraph langgraph-checkpoint-sqlite
 ssh kl5
 ml pytorch/2.12.0
 unset PYTHONNOUSERSITE
-source /nopt/nlr/apps/kestrel-gpu/software/mace/environments/mace/bin/activate
+source /kfs2/projects/newbridge/kgriffin/aseflow/.venv/bin/activate
 export AC_PATH=/your/path/to/AdaptiveComputing   # skip if already in ~/.bashrc
 cd /path/to/aseflow/test-run
 ```
