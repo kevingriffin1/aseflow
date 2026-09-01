@@ -16,7 +16,7 @@
 ml pytorch/2.12.0
 unset PYTHONNOUSERSITE
 
-source /kfs2/projects/newbridge/kgriffin/aseflow/.venv/bin/activate
+source "$(dirname "$0")/../.venv/bin/activate"
 
 aseneb --interpolate 11 \
        --maceopt \

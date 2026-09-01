@@ -33,7 +33,7 @@ echo "============================================================"
 
 ml pytorch/2.12.0 2>/dev/null
 unset PYTHONNOUSERSITE
-source /kfs2/projects/newbridge/kgriffin/aseflow/.venv/bin/activate
+source "$(dirname "$0")/../../.venv/bin/activate"
 
 # Pass shell variables into Python via environment so we can keep <<'EOF'
 # (single-quoted, no shell expansion inside the heredoc).

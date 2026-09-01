@@ -29,11 +29,20 @@ export AC_PATH=/your/path/to/AdaptiveComputing
 
 If `AC_PATH` is not set, the workflow falls back to `~/AdaptiveComputing`.
 
-### 2. Python environment
+### 2. Create the Python environment
 
-A dedicated venv lives at `aseflow/.venv/` with all required packages already
-installed (`aseneb`, `mace-torch`, `langgraph`, etc.). No pip install needed —
-just activate it as shown in the usage section below.
+Create a dedicated venv inside the repo. Must be done from **kl5**:
+
+```bash
+ssh kl5
+ml pytorch/2.12.0
+python3 -m venv /your/path/to/aseflow/.venv --system-site-packages
+source /your/path/to/aseflow/.venv/bin/activate
+pip install mace-torch ase langgraph langgraph-checkpoint-sqlite
+pip install -e /your/path/to/aseflow
+```
+
+The venv is gitignored — each user creates their own at `aseflow/.venv/`.
 
 ---
 
@@ -44,10 +53,9 @@ just activate it as shown in the usage section below.
 ```bash
 ssh kl5
 ml pytorch/2.12.0
-unset PYTHONNOUSERSITE
-source /kfs2/projects/newbridge/kgriffin/aseflow/.venv/bin/activate
+source /your/path/to/aseflow/.venv/bin/activate
 export AC_PATH=/your/path/to/AdaptiveComputing   # skip if already in ~/.bashrc
-cd /path/to/aseflow/test-run
+cd /your/path/to/aseflow/test-run
 ```
 
 > **Why kl5?** The workflow starts a background manager process (tmux session)
